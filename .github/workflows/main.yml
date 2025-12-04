@@ -1,0 +1,44 @@
+
+# Name of the workflow visible in the GitHub Actions tab
+name: Deploy Backend to Elastic Beanstalk
+# 1. Trigger: Define when this workflow should run
+on:
+  push:
+    branches:
+      - main # Change to 'master' or your desired branch
+
+# 2. Jobs: Define the tasks (build, deploy)
+jobs:
+  deploy:
+    environment: aws environment
+    runs-on: ubuntu-latest # GitHub-hosted runner environment
+
+    # 3. Steps: A sequence of tasks to execute
+    steps:
+      # Standard step to check out your repository code
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # (Optional) If your Node.js app needs dependencies installed before zipping
+      - name: Install Dependencies
+        run: npm install 
+
+      # Create a ZIP file of the application code for deployment
+      - name: Generate deployment package
+        run: zip -r deploy.zip . -x "*.git*" # Zip everything, excluding git artifacts
+
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v22
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: TEST
+          environment_name: Test-env
+          version_label: deploy-${{ github.sha }}
+          region: me-south-1
+          deployment_package: deploy.zip
+        
+          
+          # Optional: Wait for the EB environment to become healthy
+          wait_for_deployment: true
+          wait_for_environment_recovery: 60
