@@ -12,8 +12,34 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(morgan('dev'));
-app.use(cors());
 app.use(express.json());
+
+
+
+const allowedOrigins = [
+  "http://localhost:5173",
+   "https://global.mahdisab.site",
+
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests from tools like Postman (no origin)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("❌ CORS blocked: Not allowed by server"));
+      }
+    },
+    credentials: true,
+  })
+);
+
+
+
 
 // MongoDB Connection
 // NOTE: In a real scenario, use process.env.MONGO_URI. 
