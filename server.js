@@ -55,18 +55,21 @@ const getMongoURI = async () => {
         VersionStage: "AWSCURRENT", // VersionStage defaults to AWSCURRENT if unspecified
       })
     );
+
+    const secret = response.SecretString;
+
+    try {
+      const parsed = JSON.parse(secret);
+      return parsed.MONGO_URI;
+    } catch {
+      return secret; // plain string
+    }
   } catch (error) {
     // For a list of exceptions thrown, see
     // https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
     throw error;
   }
-
-  return response.SecretString;
 };
-
-
-
-
 
 // Routes
 
@@ -110,24 +113,19 @@ app.get("/", (req, res) => {
   res.send("Backend is running!");
 });
 
-
-
-
-
-
-
-
-
-
-
 const startServer = async () => {
   let db;
+
+  console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("Fetching Mongo URI...");
 
   if (process.env.NODE_ENV !== "production") {
     db = process.env.MONGO_URI;
   } else {
     db = await getMongoURI();
   }
+
+  console.log("db string length:", db.length);
 
   await mongoose.connect(db);
 
@@ -140,26 +138,3 @@ startServer().catch((err) => {
   console.error("❌ Failed to start server:", err);
   process.exit(1);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
